@@ -8,6 +8,3 @@ function Start () {
     Destroy (gameObject, 14);
 }
 
-function Update () {
-
-}

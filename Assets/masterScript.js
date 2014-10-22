@@ -10,6 +10,7 @@ public var Kungen : GameObject;
 public var fasterSpawn : float = 0;
 public var subsLeft : int = 100000;
 public var style : GUIStyle;
+var putinWinsSound : AudioClip;
 
 
 
@@ -44,6 +45,7 @@ function Update(){
 //gets ingame menu inputs
 	if(Input.GetKeyUp(KeyCode.Escape)) {
 		pauseUnpause();
+		startMenu();
     }
 
 	if(pause) {
@@ -56,8 +58,11 @@ function Update(){
 		}
 }
 function pauseUnpause(){
-	menu =!pause;
+
     pause = !pause;
+}
+function startMenu(){
+	menu =!menu;
 }
 
 
@@ -78,7 +83,7 @@ function FixedUpdate () {
 	
 	if(!Kungen){
 	  putinWins();      
-      pauseUnpause();
+      
       
 	}
 
@@ -92,7 +97,12 @@ function spawnRussianSub () {
 }
 
 function putinWins(){
+	audio.clip = putinWinsSound;
+	audio.Play();
  	Instantiate(putin, Vector2( transform.position.x-6,transform.position.y ),transform.rotation);
+	pauseUnpause();
+	menu = true; 
+	
 	
 }
 
