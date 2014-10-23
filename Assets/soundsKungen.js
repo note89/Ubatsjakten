@@ -33,7 +33,7 @@ function FixedUpdate(){
 function PlaySound()
 {
 	//Debug.Log(audio.clip);
-	value = Random.Range(0,1200);
+	value = Random.Range(0,600);
 
 	if(value==50 && !audio.isPlaying){
 		audio.clip = audioList[Random.Range(0,7)];
