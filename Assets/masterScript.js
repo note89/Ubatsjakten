@@ -111,7 +111,7 @@ function OnGUI(){
 	if(menu)
 	{ 		
 
-	    if(GUI.Button(new Rect((Screen.width - myButton.width) * 0.5f, Screen.height * 0.4f, myButton.width, myButton.height), "Restart Game"))
+	    if(GUI.Button(new Rect((Screen.width - myButton.width) * 0.5f, Screen.height * 0.7f, myButton.width, myButton.height), "Restart Game"))
 			{	
 				menu =false;
 				pause =false;
