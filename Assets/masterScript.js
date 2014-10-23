@@ -1,17 +1,22 @@
 ﻿#pragma strict
 
 public var russianSub : Rigidbody2D;
-public var spawnRate : int;
 private var timeToSpawn : float;
 public var putin : Transform;
 private var pause : boolean = false;
 private var menu  : boolean = false;
 public var Kungen : GameObject;
-public var fasterSpawn : float = 0;
 public var subsLeft : int = 100000;
 public var style : GUIStyle;
 var putinWinsSound : AudioClip;
 
+public var spawnTime: float;
+public var timeMuliplyer: float;
+private var Timer:float;
+
+function Awake(){
+	Timer = Time.time + spawnTime;
+}
 
 
 public class Button
@@ -68,14 +73,14 @@ function startMenu(){
 
 
 function FixedUpdate () {
-	if(timeToSpawn>spawnRate){
+	if(Time.time>Timer){
 	     spawnRussianSub();	
-	     timeToSpawn = 0 + fasterSpawn;
-	     fasterSpawn += 0.1;
+	     spawnTime = spawnTime*timeMuliplyer;
+	     Timer = Time.time + spawnTime;
 	  
 	}
 	
-	timeToSpawn += 1;
+
 
 	
 	
