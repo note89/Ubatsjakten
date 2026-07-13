@@ -9,8 +9,21 @@ export class AudioManager {
     this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
     this.bgmGain = this.audioContext.createGain();
     this.bgmGain.connect(this.audioContext.destination);
-    this.bgmGain.gain.value = 0.2;
+    this.bgmGain.gain.value = 0.4;
     this.preloadSounds();
+
+    // Resume audio context on first user interaction
+    const resumeAudio = () => {
+      if (this.audioContext.state === "suspended") {
+        this.audioContext.resume();
+      }
+      document.removeEventListener("click", resumeAudio);
+      document.removeEventListener("keydown", resumeAudio);
+      document.removeEventListener("touchstart", resumeAudio);
+    };
+    document.addEventListener("click", resumeAudio);
+    document.addEventListener("keydown", resumeAudio);
+    document.addEventListener("touchstart", resumeAudio);
   }
 
   private preloadSounds() {
@@ -40,12 +53,19 @@ export class AudioManager {
 
   private loadSound(url: string, name: string): Promise<void> {
     return fetch(url)
-      .then((res) => res.arrayBuffer())
-      .then((buffer) => this.audioContext.decodeAudioData(buffer))
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status} for ${name}`);
+        return res.arrayBuffer();
+      })
+      .then((buffer) => {
+        if (buffer.byteLength === 0) throw new Error(`Empty buffer for ${name}`);
+        return this.audioContext.decodeAudioData(buffer);
+      })
       .then((decoded) => {
         this.sounds.set(name, decoded);
+        console.log(`✓ Loaded ${name} (${(decoded.duration / 60).toFixed(1)}min)`);
       })
-      .catch((err) => console.warn(`Failed to load ${name}:`, err));
+      .catch((err) => console.error(`✗ Failed to load ${name}:`, err));
   }
 
   private playSound(name: string, volume = 0.5) {

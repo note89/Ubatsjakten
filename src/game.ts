@@ -75,7 +75,9 @@ export class Game {
       }
       if (e.key === "z" || e.key === "Z") {
         if (!this.gameOver && this.started) {
-          this.player.fireIbra();
+          if (this.player.fireIbra()) {
+            this.audio.playZlatanAttack();
+          }
         }
       }
     });
