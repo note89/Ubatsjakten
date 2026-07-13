@@ -15,21 +15,21 @@ export class AudioManager {
 
   private preloadSounds() {
     const soundList = [
-      { name: "SpeletStartar", path: "/assets/sounds/SpeletStartar.aiff" },
-      { name: "DuringGame", path: "/assets/sounds/DuringGame.aiff" },
-      { name: "LoseLife1", path: "/assets/sounds/LoseLife1.aiff" },
-      { name: "LoseLife2", path: "/assets/sounds/LoseLife2.aiff" },
-      { name: "ZlatanFlyger1", path: "/assets/sounds/ZlatanFlyger1.aiff" },
-      { name: "ZlatanFlyger2", path: "/assets/sounds/ZlatanFlyger2.aiff" },
-      { name: "GameOver", path: "/assets/sounds/GameOver.aiff" },
-      { name: "implode", path: "/assets/sounds/implode.aiff" },
+      { name: "SpeletStartar", path: "/assets/sounds/SpeletStartar.wav" },
+      { name: "DuringGame", path: "/assets/sounds/DuringGame.wav" },
+      { name: "LoseLife1", path: "/assets/sounds/LoseLife1.wav" },
+      { name: "LoseLife2", path: "/assets/sounds/LoseLife2.wav" },
+      { name: "ZlatanFlyger1", path: "/assets/sounds/ZlatanFlyger1.wav" },
+      { name: "ZlatanFlyger2", path: "/assets/sounds/ZlatanFlyger2.wav" },
+      { name: "GameOver", path: "/assets/sounds/GameOver.wav" },
+      { name: "implode", path: "/assets/sounds/implode.wav" },
       { name: "Island", path: "/assets/sounds/Island.wav" },
       { name: "Naturligt", path: "/assets/sounds/Naturligt.wav" },
       { name: "Tack", path: "/assets/sounds/Tack.wav" },
       { name: "Trevligt", path: "/assets/sounds/Trevligt.wav" },
       { name: "upphetsad", path: "/assets/sounds/upphetsad.wav" },
-      { name: "KungenKommentar1", path: "/assets/sounds/KungenKommentar1.aiff" },
-      { name: "KungenKommentar2", path: "/assets/sounds/KungenKommentar2.aiff" },
+      { name: "KungenKommentar1", path: "/assets/sounds/KungenKommentar1.wav" },
+      { name: "KungenKommentar2", path: "/assets/sounds/KungenKommentar2.wav" },
     ];
 
     soundList.forEach(({ name, path }) => {

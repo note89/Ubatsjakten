@@ -156,15 +156,19 @@ export class Game {
 
     this.bullets.forEach((bullet, bIdx) => {
       if (bullet.isIbra) {
-        // Ibra clears entire board
-        this.enemies.forEach((_, eIdx) => {
-          if (!enemiesToRemove.includes(eIdx)) {
-            enemiesToRemove.push(eIdx);
-            this.submarinesKilled++;
+        // Zlatan sweeps across screen, destroys all enemies he touches
+        this.enemies.forEach((enemy, eIdx) => {
+          if (bullet.collidesWith(enemy)) {
+            if (!enemiesToRemove.includes(eIdx)) {
+              enemiesToRemove.push(eIdx);
+              this.submarinesKilled++;
+            }
           }
         });
-        this.audio.playZlatanAttack();
-        bulletsToRemove.push(bIdx);
+        // Remove Zlatan when he exits right side
+        if (bullet.x > this.canvas.width + 500) {
+          bulletsToRemove.push(bIdx);
+        }
       } else {
         this.enemies.forEach((enemy, eIdx) => {
           if (bullet.collidesWith(enemy)) {

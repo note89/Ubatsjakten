@@ -66,7 +66,8 @@ export class Player {
   fireIbra() {
     if (this.shootCount >= 20) {
       this.shootCount = 0;
-      const ibra = new Bullet(this.x + this.width, this.y + this.height / 2, 200, 150, true);
+      // Zlatan spans full screen height, starts from left edge
+      const ibra = new Bullet(-200, 0, 400, this.height * 8, true);
       this.pendingBullets.push(ibra);
       return true;
     }
@@ -174,7 +175,7 @@ export class Bullet {
     this.width = width;
     this.height = height;
     this.isIbra = isIbra;
-    this.velocity = isIbra ? 8 : 6;
+    this.velocity = isIbra ? 12 : 6;
     this.image = loadImage("/assets/sprites/booat90.png");
     this.ibraImage = loadImage("/assets/sprites/Ibrahimovic.png");
   }
@@ -197,6 +198,10 @@ export class Bullet {
       this.y < other.y + other.height &&
       this.y + this.height > other.y
     );
+  }
+
+  touchesEnemyArea(canvasHeight: number): boolean {
+    return this.y >= 0 && this.y <= canvasHeight;
   }
 }
 
