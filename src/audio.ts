@@ -9,7 +9,7 @@ export class AudioManager {
     this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
     this.bgmGain = this.audioContext.createGain();
     this.bgmGain.connect(this.audioContext.destination);
-    this.bgmGain.gain.value = 0.4;
+    this.bgmGain.gain.value = 0.6;
     this.preloadSounds();
 
     // Resume audio context on first user interaction
@@ -166,5 +166,10 @@ export class AudioManager {
     const sounds = ["LoseLife1", "LoseLife2"];
     const random = sounds[Math.floor(Math.random() * sounds.length)];
     this.playSound(random, 0.5);
+  }
+
+  setVolume(volume: number) {
+    this.bgmGain.gain.value = Math.max(0, Math.min(1, volume));
+    console.log(`🔊 Music volume: ${(volume * 100).toFixed(0)}%`);
   }
 }
