@@ -104,8 +104,13 @@ export class AudioManager {
     try {
       // Resume audio context if suspended
       if (this.audioContext.state === "suspended") {
-        this.audioContext.resume().catch(err => console.warn("Failed to resume audio context:", err));
+        console.log("Audio context suspended, resuming...");
+        this.audioContext.resume().then(() => {
+          console.log("Audio context resumed successfully");
+        }).catch(err => console.error("Failed to resume audio context:", err));
       }
+
+      console.log(`Audio context state: ${this.audioContext.state}, destination max: ${this.audioContext.destination.maxChannelCount}`);
 
       const source = this.audioContext.createBufferSource();
       source.buffer = buffer;
@@ -113,9 +118,9 @@ export class AudioManager {
       source.connect(this.bgmGain);
       source.start(0);
       this.bgmSource = source as unknown as AudioBufferAudioNode;
-      console.log("Background music started");
+      console.log(`✓ Background music started (${buffer.duration.toFixed(1)}s, context: ${this.audioContext.state})`);
     } catch (err) {
-      console.warn("Error playing background music:", err);
+      console.error("Error playing background music:", err);
     }
   }
 
