@@ -263,7 +263,7 @@ export class Game {
     for (let i = 0; i < 3; i++) {
       const img = this.heartImages[Math.max(0, 2 - this.lives)] || this.heartImages[2];
       if (img.complete) {
-        this.ctx.drawImage(img, this.canvas.width - 150 + i * 50, 20, 40, 40);
+        this.ctx.drawImage(img, this.canvas.width - 160 + i * 50, 60, 45, 45);
       }
     }
 
