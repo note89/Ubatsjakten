@@ -264,6 +264,10 @@ export class Game {
     }
 
     if (!this.started) {
+      if (!this.audio.isReady()) {
+        this.renderLoading();
+        return;
+      }
       this.renderMenu();
       return;
     }
@@ -287,6 +291,17 @@ export class Game {
     if (this.gameOver) {
       this.renderGameOver();
     }
+  }
+
+  private renderLoading() {
+    this.ctx.fillStyle = "rgba(0,0,0,0.8)";
+    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    this.ctx.fillStyle = "#fff";
+    this.ctx.font = "bold 48px Arial";
+    this.ctx.textAlign = "center";
+    this.ctx.fillText("UBÅTSJAKTEN", this.canvas.width / 2, this.canvas.height / 2 - 50);
+    this.ctx.font = "24px Arial";
+    this.ctx.fillText("Loading audio...", this.canvas.width / 2, this.canvas.height / 2 + 50);
   }
 
   private renderMenu() {
@@ -475,7 +490,11 @@ export class Game {
     this.player.x = 80;
     this.player.y = this.canvas.height / 2;
     this.player.reset();
-    this.audio.stopBackgroundMusic();
-    setTimeout(() => this.audio.playBackgroundMusic(), 200);
+    this.musicPlaying = false;
+    this.audio.stopAllSounds();
+    setTimeout(() => {
+      this.audio.playBackgroundMusic();
+      this.musicPlaying = true;
+    }, 100);
   }
 }

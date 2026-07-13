@@ -4,6 +4,7 @@ export class AudioManager {
   private bgmSource: AudioBufferAudioNode | null = null;
   private bgmGain: GainNode;
   private loadingPromises: Promise<void>[] = [];
+  private allSoundsLoaded = false;
 
   constructor() {
     this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -11,6 +12,7 @@ export class AudioManager {
     this.bgmGain.connect(this.audioContext.destination);
     this.bgmGain.gain.value = 0.6;
     this.preloadSounds();
+    this.waitForAllSounds();
 
     // Resume audio context on first user interaction
     const resumeAudio = () => {
@@ -49,6 +51,17 @@ export class AudioManager {
       const promise = this.loadSound(path, name);
       this.loadingPromises.push(promise);
     });
+  }
+
+  private waitForAllSounds() {
+    Promise.all(this.loadingPromises).then(() => {
+      this.allSoundsLoaded = true;
+      console.log("✓ All audio loaded and ready");
+    });
+  }
+
+  isReady(): boolean {
+    return this.allSoundsLoaded;
   }
 
   private loadSound(url: string, name: string): Promise<void> {
@@ -182,5 +195,18 @@ export class AudioManager {
   setVolume(volume: number) {
     this.bgmGain.gain.value = Math.max(0, Math.min(1, volume));
     console.log(`🔊 Music volume: ${(volume * 100).toFixed(0)}%`);
+  }
+
+  stopAllSounds() {
+    this.stopBackgroundMusic();
+    // Close and recreate audio context to stop all playing sounds
+    if (this.audioContext.state !== "closed") {
+      this.audioContext.close();
+    }
+    this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    this.bgmGain = this.audioContext.createGain();
+    this.bgmGain.connect(this.audioContext.destination);
+    this.bgmGain.gain.value = 0.6;
+    console.log("🔇 All audio stopped and context reset");
   }
 }
