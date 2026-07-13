@@ -1,0 +1,14 @@
+{
+  "name": "ubatsjakten",
+  "version": "1.0.0",
+  "description": "Game about Sweden, the king and the oppressing forces from the East",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "bun run src/server.ts",
+    "build": "bun build ./src/index.ts --outdir ./dist --target browser"
+  },
+  "keywords": ["game", "sweden", "typescript"],
+  "author": "Nils Eriksson",
+  "license": "MIT"
+}
