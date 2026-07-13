@@ -29,10 +29,10 @@ export class Game {
     this.canvas.height = window.innerHeight;
 
     this.player = new Player(
-      100,
+      80,
       this.canvas.height / 2,
-      60,
-      50
+      120,
+      100
     );
     this.audio = new AudioManager();
     this.bgImage = new Image();
@@ -155,14 +155,26 @@ export class Game {
     const enemiesToRemove: number[] = [];
 
     this.bullets.forEach((bullet, bIdx) => {
-      this.enemies.forEach((enemy, eIdx) => {
-        if (bullet.collidesWith(enemy)) {
-          if (!bulletsToRemove.includes(bIdx)) bulletsToRemove.push(bIdx);
-          if (!enemiesToRemove.includes(eIdx)) enemiesToRemove.push(eIdx);
-          this.submarinesKilled++;
-          this.audio.playHit();
-        }
-      });
+      if (bullet.isIbra) {
+        // Ibra clears entire board
+        this.enemies.forEach((_, eIdx) => {
+          if (!enemiesToRemove.includes(eIdx)) {
+            enemiesToRemove.push(eIdx);
+            this.submarinesKilled++;
+          }
+        });
+        this.audio.playZlatanAttack();
+        bulletsToRemove.push(bIdx);
+      } else {
+        this.enemies.forEach((enemy, eIdx) => {
+          if (bullet.collidesWith(enemy)) {
+            if (!bulletsToRemove.includes(bIdx)) bulletsToRemove.push(bIdx);
+            if (!enemiesToRemove.includes(eIdx)) enemiesToRemove.push(eIdx);
+            this.submarinesKilled++;
+            this.audio.playHit();
+          }
+        });
+      }
     });
 
     // Remove in reverse order to maintain indices
@@ -181,10 +193,10 @@ export class Game {
   }
 
   private spawnEnemy() {
-    const y = Math.random() * (this.canvas.height - 80) + 40;
+    const y = Math.random() * (this.canvas.height - 100) + 50;
     const speedVariation = Math.random() * 3.7 - 1.3;
     const speed = -2 - speedVariation;
-    this.enemies.push(new Enemy(this.canvas.width, y, 60, 45, speed));
+    this.enemies.push(new Enemy(this.canvas.width, y, 90, 70, speed));
   }
 
   private render() {
@@ -303,9 +315,10 @@ export class Game {
     this.spawnTimer = 0;
     this.enemies = [];
     this.bullets = [];
-    this.player.x = 100;
+    this.player.x = 80;
     this.player.y = this.canvas.height / 2;
     this.player.reset();
-    this.audio.playBackgroundMusic();
+    this.audio.stopBackgroundMusic();
+    setTimeout(() => this.audio.playBackgroundMusic(), 200);
   }
 }

@@ -56,8 +56,8 @@ export class Player {
       const bullet = new Bullet(
         this.x + this.width,
         this.y + this.height / 2,
-        30,
-        15
+        25,
+        12
       );
       this.pendingBullets.push(bullet);
     }
@@ -66,7 +66,7 @@ export class Player {
   fireIbra() {
     if (this.ibraReady()) {
       this.shootCount = 0;
-      const ibra = new Bullet(this.x + this.width, this.y + this.height / 2, 50, 50, true);
+      const ibra = new Bullet(this.x + this.width, this.y + this.height / 2, 200, 150, true);
       this.pendingBullets.push(ibra);
     }
   }
