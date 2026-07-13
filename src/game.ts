@@ -284,47 +284,65 @@ export class Game {
     this.ctx.font = "24px Arial";
     this.ctx.fillText("↑/↓ Move | SPACE Shoot | Z Zlatan", this.canvas.width / 2, this.canvas.height / 2 + 50);
 
-    const btnX = this.canvas.width / 2 - 200;
+    const btnX = this.canvas.width / 2 - 220;
     const btnY = this.canvas.height / 2 + 100;
-    const btnW = 400;
-    const btnH = 80;
-    const cornerRadius = 20;
+    const btnW = 440;
+    const btnH = 90;
+    const cornerRadius = 25;
 
     this.startButtonBounds = { x: btnX, y: btnY, w: btnW, h: btnH };
 
-    // Draw shadow
-    this.ctx.fillStyle = "rgba(0,0,0,0.4)";
-    this.roundRect(btnX + 4, btnY + 4, btnW, btnH, cornerRadius);
+    // Deep shadow (King style)
+    this.ctx.fillStyle = "rgba(0,0,0,0.5)";
+    this.roundRect(btnX + 6, btnY + 8, btnW, btnH, cornerRadius);
     this.ctx.fill();
 
-    // Draw blue background (Swedish blue)
-    this.ctx.fillStyle = "#0055DD";
+    // Outer glow/border shadow
+    this.ctx.strokeStyle = "rgba(0,0,0,0.3)";
+    this.ctx.lineWidth = 6;
+    this.roundRect(btnX - 2, btnY - 2, btnW + 4, btnH + 4, cornerRadius + 2);
+    this.ctx.stroke();
+
+    // Main gradient (gold to blue)
+    const gradient = this.ctx.createLinearGradient(btnX, btnY, btnX, btnY + btnH);
+    gradient.addColorStop(0, "#FFD700"); // Gold
+    gradient.addColorStop(0.45, "#FFA500"); // Orange
+    gradient.addColorStop(1, "#0066FF"); // Blue
+
+    this.ctx.fillStyle = gradient;
     this.roundRect(btnX, btnY, btnW, btnH, cornerRadius);
     this.ctx.fill();
 
-    // Draw yellow top gradient (Swedish yellow)
-    const gradient = this.ctx.createLinearGradient(btnX, btnY, btnX, btnY + btnH / 2);
-    gradient.addColorStop(0, "#FFDD00");
-    gradient.addColorStop(1, "rgba(255,221,0,0)");
-    this.ctx.fillStyle = gradient;
-    this.roundRect(btnX, btnY, btnW, btnH / 2, cornerRadius);
-    this.ctx.fill();
-
-    // Draw border
-    this.ctx.strokeStyle = "#FFDD00";
-    this.ctx.lineWidth = 4;
+    // Gold border
+    this.ctx.strokeStyle = "#FFE44D";
+    this.ctx.lineWidth = 5;
     this.roundRect(btnX, btnY, btnW, btnH, cornerRadius);
     this.ctx.stroke();
 
-    // Draw text with shadow
-    this.ctx.fillStyle = "rgba(0,0,0,0.3)";
-    this.ctx.font = "bold 40px Arial";
-    this.ctx.textAlign = "center";
-    this.ctx.fillText("▶ START GAME", this.canvas.width / 2, btnY + 58);
+    // Inner highlight (shine effect)
+    const highlight = this.ctx.createLinearGradient(btnX, btnY, btnX, btnY + btnH * 0.4);
+    highlight.addColorStop(0, "rgba(255,255,255,0.4)");
+    highlight.addColorStop(1, "rgba(255,255,255,0)");
+    this.ctx.fillStyle = highlight;
+    this.roundRect(btnX + 5, btnY + 5, btnW - 10, btnH * 0.35, cornerRadius - 3);
+    this.ctx.fill();
 
+    // Draw text with shadow (King style)
+    this.ctx.font = "bold 48px Arial";
+    this.ctx.textAlign = "center";
+
+    // Black shadow
+    this.ctx.fillStyle = "rgba(0,0,0,0.4)";
+    this.ctx.fillText("▶ START GAME", this.canvas.width / 2 + 2, btnY + 65);
+
+    // White main text
     this.ctx.fillStyle = "#fff";
-    this.ctx.font = "bold 40px Arial";
-    this.ctx.fillText("▶ START GAME", this.canvas.width / 2, btnY + 55);
+    this.ctx.shadowColor = "rgba(0,0,0,0.5)";
+    this.ctx.shadowBlur = 8;
+    this.ctx.shadowOffsetX = 2;
+    this.ctx.shadowOffsetY = 2;
+    this.ctx.fillText("▶ START GAME", this.canvas.width / 2, btnY + 63);
+    this.ctx.shadowColor = "transparent";
 
     this.ctx.fillStyle = "#cccccc";
     this.ctx.font = "16px Arial";
