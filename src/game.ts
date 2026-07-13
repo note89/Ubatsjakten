@@ -119,6 +119,9 @@ export class Game {
           this.enemies.splice(eIdx, 1);
           this.score--;
           this.audio.playHit();
+          if (Math.random() < 0.1) {
+            this.audio.playKingComment();
+          }
         }
       });
     });
@@ -127,6 +130,7 @@ export class Game {
       if (enemy.collidesWith(this.player)) {
         this.enemies.splice(eIdx, 1);
         this.player.alive = false;
+        this.audio.playLoseLife();
       }
     });
   }
@@ -170,19 +174,35 @@ export class Game {
     }
 
     if (this.gameOver) {
-      this.ctx.fillStyle = "rgba(0,0,0,0.8)";
-      this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-      this.ctx.fillStyle = "#ff0000";
-      this.ctx.font = "48px Arial";
-      this.ctx.textAlign = "center";
-      this.ctx.fillText("PUTIN WINS", this.canvas.width / 2, this.canvas.height / 2 - 50);
+      const putinImg = new Image();
+      putinImg.src = "/assets/sprites/putinwins.png";
+      if (putinImg.complete || putinImg.naturalWidth > 0) {
+        this.ctx.drawImage(
+          putinImg,
+          this.canvas.width / 2 - 150,
+          this.canvas.height / 2 - 150,
+          300,
+          300
+        );
+      } else {
+        this.ctx.fillStyle = "rgba(0,0,0,0.8)";
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        this.ctx.fillStyle = "#ff0000";
+        this.ctx.font = "48px Arial";
+        this.ctx.textAlign = "center";
+        this.ctx.fillText("PUTIN WINS", this.canvas.width / 2, this.canvas.height / 2);
+      }
       this.ctx.fillStyle = "#fff";
       this.ctx.font = "24px Arial";
-      this.ctx.fillText("Press SPACE to restart", this.canvas.width / 2, this.canvas.height / 2 + 50);
+      this.ctx.textAlign = "center";
+      this.ctx.fillText("Press SPACE to restart", this.canvas.width / 2, this.canvas.height - 50);
     }
   }
 
   public start() {
+    this.audio.playGameStart();
+    setTimeout(() => this.audio.playBackgroundMusic(), 1000);
+
     const gameLoop = () => {
       this.update();
       this.render();

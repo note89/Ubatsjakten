@@ -1,3 +1,15 @@
+const imageCache: Map<string, HTMLImageElement> = new Map();
+
+const loadImage = (src: string): HTMLImageElement => {
+  if (imageCache.has(src)) {
+    return imageCache.get(src)!;
+  }
+  const img = new Image();
+  img.src = src;
+  imageCache.set(src, img);
+  return img;
+};
+
 export class Player {
   x: number;
   y: number;
@@ -9,12 +21,14 @@ export class Player {
   alive = true;
   private lastShotTime = 0;
   private shootCooldown = 300;
+  private image: HTMLImageElement;
 
   constructor(x: number, y: number, width: number, height: number) {
     this.x = x;
     this.y = y;
     this.width = width;
     this.height = height;
+    this.image = loadImage("/assets/sprites/kungen.png");
   }
 
   moveUp() {
@@ -37,7 +51,7 @@ export class Player {
     const now = Date.now();
     if (now - this.lastShotTime > this.shootCooldown) {
       this.lastShotTime = now;
-      return new Bullet(this.x + this.width, this.y + this.height / 2, 8, 8, 6);
+      return new Bullet(this.x + this.width, this.y + this.height / 2, 40, 20);
     }
     return null;
   }
@@ -52,10 +66,9 @@ export class Player {
   }
 
   render(ctx: CanvasRenderingContext2D) {
-    ctx.fillStyle = "#00ff00";
-    ctx.fillRect(this.x, this.y, this.width, this.height);
-    ctx.fillStyle = "#ffff00";
-    ctx.fillRect(this.x + 20, this.y + 10, 15, 5);
+    if (this.image.complete) {
+      ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
+    }
   }
 
   collidesWith(other: Entity): boolean {
@@ -74,6 +87,7 @@ export class Enemy {
   width: number;
   height: number;
   velocity: number;
+  private image: HTMLImageElement;
 
   constructor(x: number, y: number, width: number, height: number, velocity: number) {
     this.x = x;
@@ -81,6 +95,7 @@ export class Enemy {
     this.width = width;
     this.height = height;
     this.velocity = velocity;
+    this.image = loadImage("/assets/sprites/sub.png");
   }
 
   update() {
@@ -88,10 +103,9 @@ export class Enemy {
   }
 
   render(ctx: CanvasRenderingContext2D) {
-    ctx.fillStyle = "#ff0000";
-    ctx.fillRect(this.x, this.y, this.width, this.height);
-    ctx.fillStyle = "#ffff00";
-    ctx.fillRect(this.x + 5, this.y + 10, 10, 5);
+    if (this.image.complete) {
+      ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
+    }
   }
 
   collidesWith(other: Entity): boolean {
@@ -109,14 +123,15 @@ export class Bullet {
   y: number;
   width: number;
   height: number;
-  velocity: number;
+  velocity = 6;
+  private image: HTMLImageElement;
 
-  constructor(x: number, y: number, width: number, height: number, velocity: number) {
+  constructor(x: number, y: number, width: number, height: number) {
     this.x = x;
     this.y = y;
     this.width = width;
     this.height = height;
-    this.velocity = velocity;
+    this.image = loadImage("/assets/sprites/booat90.png");
   }
 
   update() {
@@ -124,8 +139,9 @@ export class Bullet {
   }
 
   render(ctx: CanvasRenderingContext2D) {
-    ctx.fillStyle = "#ffff00";
-    ctx.fillRect(this.x, this.y, this.width, this.height);
+    if (this.image.complete) {
+      ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
+    }
   }
 
   collidesWith(other: Entity): boolean {
