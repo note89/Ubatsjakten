@@ -94,37 +94,45 @@ export class AudioManager {
   }
 
   playBackgroundMusic() {
-    if (this.bgmSource) return;
+    if (this.bgmSource) {
+      console.log("Music already playing, ignoring play request");
+      return;
+    }
     const buffer = this.sounds.get("DuringGame");
     if (!buffer) {
-      console.warn("DuringGame buffer not loaded yet");
+      console.error("❌ DuringGame buffer NOT loaded. Available sounds:", Array.from(this.sounds.keys()));
       return;
     }
 
+    console.log(`🎵 DuringGame buffer found: ${buffer.duration.toFixed(1)}s, ${buffer.numberOfChannels}ch`);
+
     const startMusic = () => {
       try {
-        console.log(`Audio context state: ${this.audioContext.state}`);
+        console.log(`📍 Starting playback - context: ${this.audioContext.state}, dest channels: ${this.audioContext.destination.maxChannelCount}`);
         const source = this.audioContext.createBufferSource();
         source.buffer = buffer;
         source.loop = true;
         source.connect(this.bgmGain);
+
+        console.log(`🔊 BGM gain value: ${this.bgmGain.gain.value}`);
+
         source.start(0);
         this.bgmSource = source as unknown as AudioBufferAudioNode;
-        console.log(`✓ Background music started (${buffer.duration.toFixed(1)}s, context: ${this.audioContext.state})`);
+        console.log(`✓ Background music playing (loop: true, volume: ${(this.bgmGain.gain.value * 100).toFixed(0)}%)`);
       } catch (err) {
-        console.error("Error playing background music:", err);
+        console.error("❌ Error playing background music:", err);
       }
     };
 
     // Resume audio context if suspended, then start music
     if (this.audioContext.state === "suspended") {
-      console.log("Audio context suspended, resuming before playing...");
+      console.log("⏸️ Audio context suspended, resuming...");
       this.audioContext.resume()
         .then(() => {
-          console.log("Audio context resumed, starting music");
+          console.log("✓ Audio context resumed");
           startMusic();
         })
-        .catch(err => console.error("Failed to resume audio context:", err));
+        .catch(err => console.error("❌ Failed to resume audio context:", err));
     } else {
       startMusic();
     }
@@ -134,10 +142,13 @@ export class AudioManager {
     if (this.bgmSource) {
       try {
         (this.bgmSource as any).stop();
+        console.log("⏹️ Background music stopped");
       } catch (err) {
-        console.warn("Error stopping background music:", err);
+        console.warn("⚠️ Error stopping background music:", err);
       }
       this.bgmSource = null;
+    } else {
+      console.log("ℹ️ No music currently playing");
     }
   }
 

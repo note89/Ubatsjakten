@@ -388,13 +388,13 @@ export class Game {
   }
 
   private renderMusicControls() {
-    const btnX = 20;
-    const btnY = this.canvas.height - 80;
-    const btnW = 120;
+    const btnX = this.canvas.width - 140;
+    const btnY = 10;
+    const btnW = 130;
     const btnH = 30;
-    const sliderY = btnY + 40;
-    const sliderW = 200;
-    const sliderH = 10;
+    const sliderY = btnY + 35;
+    const sliderW = 130;
+    const sliderH = 8;
 
     this.musicButtonBounds = { x: btnX, y: btnY, w: btnW, h: btnH };
     this.volumeSliderBounds = { x: btnX, y: sliderY, w: sliderW, h: sliderH };
