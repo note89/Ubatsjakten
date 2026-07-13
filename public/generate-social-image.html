@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Generate Social Image</title>
+</head>
+<body>
+  <canvas id="canvas" width="1200" height="630"></canvas>
+  <br>
+  <button onclick="downloadImage()">Download Social Image</button>
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    // Background - underwater theme
+    const gradient = ctx.createLinearGradient(0, 0, 0, 630);
+    gradient.addColorStop(0, '#1a3a52');
+    gradient.addColorStop(1, '#0a1a2e');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, 1200, 630);
+
+    // Water effect - particles
+    ctx.fillStyle = 'rgba(100, 150, 200, 0.1)';
+    for (let i = 0; i < 50; i++) {
+      const x = Math.random() * 1200;
+      const y = Math.random() * 630;
+      const size = Math.random() * 3;
+      ctx.fillRect(x, y, size, size);
+    }
+
+    // Title
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 100px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+    ctx.shadowBlur = 20;
+    ctx.shadowOffsetX = 3;
+    ctx.shadowOffsetY = 3;
+    ctx.fillText('UBÅTSJAKTEN', 600, 200);
+
+    // Subtitle
+    ctx.font = '40px Arial';
+    ctx.fillStyle = '#ffff00';
+    ctx.shadowBlur = 15;
+    ctx.fillText('Defend Sweden from Russian Submarines', 600, 320);
+
+    // Description
+    ctx.font = '32px Arial';
+    ctx.fillStyle = '#ffffff';
+    ctx.shadowBlur = 10;
+    ctx.fillText('A Retro Arcade Game • Play Now in Browser', 600, 400);
+
+    // Bottom banner
+    ctx.fillStyle = 'rgba(255, 215, 0, 0.2)';
+    ctx.fillRect(0, 500, 1200, 130);
+    ctx.fillStyle = '#ffd700';
+    ctx.font = 'bold 36px Arial';
+    ctx.fillText('ubatsjakten.borrowed.computer', 600, 570);
+
+    function downloadImage() {
+      const link = document.createElement('a');
+      link.href = canvas.toDataURL('image/png');
+      link.download = 'ubatsjakten-social.png';
+      link.click();
+    }
+  </script>
+</body>
+</html>
