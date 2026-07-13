@@ -101,26 +101,32 @@ export class AudioManager {
       return;
     }
 
-    try {
-      // Resume audio context if suspended
-      if (this.audioContext.state === "suspended") {
-        console.log("Audio context suspended, resuming...");
-        this.audioContext.resume().then(() => {
-          console.log("Audio context resumed successfully");
-        }).catch(err => console.error("Failed to resume audio context:", err));
+    const startMusic = () => {
+      try {
+        console.log(`Audio context state: ${this.audioContext.state}`);
+        const source = this.audioContext.createBufferSource();
+        source.buffer = buffer;
+        source.loop = true;
+        source.connect(this.bgmGain);
+        source.start(0);
+        this.bgmSource = source as unknown as AudioBufferAudioNode;
+        console.log(`✓ Background music started (${buffer.duration.toFixed(1)}s, context: ${this.audioContext.state})`);
+      } catch (err) {
+        console.error("Error playing background music:", err);
       }
+    };
 
-      console.log(`Audio context state: ${this.audioContext.state}, destination max: ${this.audioContext.destination.maxChannelCount}`);
-
-      const source = this.audioContext.createBufferSource();
-      source.buffer = buffer;
-      source.loop = true;
-      source.connect(this.bgmGain);
-      source.start(0);
-      this.bgmSource = source as unknown as AudioBufferAudioNode;
-      console.log(`✓ Background music started (${buffer.duration.toFixed(1)}s, context: ${this.audioContext.state})`);
-    } catch (err) {
-      console.error("Error playing background music:", err);
+    // Resume audio context if suspended, then start music
+    if (this.audioContext.state === "suspended") {
+      console.log("Audio context suspended, resuming before playing...");
+      this.audioContext.resume()
+        .then(() => {
+          console.log("Audio context resumed, starting music");
+          startMusic();
+        })
+        .catch(err => console.error("Failed to resume audio context:", err));
+    } else {
+      startMusic();
     }
   }
 

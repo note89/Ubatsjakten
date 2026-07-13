@@ -122,14 +122,8 @@ export class Game {
     this.started = true;
     this.audio.playGameStart();
     this.musicPlaying = true;
-    // Resume audio context and start background music on first user interaction
-    if (this.audio['audioContext'].state === 'suspended') {
-      this.audio['audioContext'].resume().then(() => {
-        setTimeout(() => this.audio.playBackgroundMusic(), 200);
-      });
-    } else {
-      setTimeout(() => this.audio.playBackgroundMusic(), 500);
-    }
+    // Audio manager handles context resumption internally
+    this.audio.playBackgroundMusic();
   }
 
   private update() {
@@ -290,20 +284,62 @@ export class Game {
     const btnX = this.canvas.width / 2 - 200;
     const btnY = this.canvas.height / 2 + 100;
     const btnW = 400;
-    const btnH = 60;
+    const btnH = 80;
+    const cornerRadius = 20;
 
     this.startButtonBounds = { x: btnX, y: btnY, w: btnW, h: btnH };
 
-    this.ctx.fillStyle = "#ffff00";
-    this.ctx.fillRect(btnX, btnY, btnW, btnH);
-    this.ctx.fillStyle = "#000";
-    this.ctx.font = "bold 32px Arial";
+    // Draw shadow
+    this.ctx.fillStyle = "rgba(0,0,0,0.4)";
+    this.roundRect(btnX + 4, btnY + 4, btnW, btnH, cornerRadius);
+    this.ctx.fill();
+
+    // Draw blue background (Swedish blue)
+    this.ctx.fillStyle = "#0055DD";
+    this.roundRect(btnX, btnY, btnW, btnH, cornerRadius);
+    this.ctx.fill();
+
+    // Draw yellow top gradient (Swedish yellow)
+    const gradient = this.ctx.createLinearGradient(btnX, btnY, btnX, btnY + btnH / 2);
+    gradient.addColorStop(0, "#FFDD00");
+    gradient.addColorStop(1, "rgba(255,221,0,0)");
+    this.ctx.fillStyle = gradient;
+    this.roundRect(btnX, btnY, btnW, btnH / 2, cornerRadius);
+    this.ctx.fill();
+
+    // Draw border
+    this.ctx.strokeStyle = "#FFDD00";
+    this.ctx.lineWidth = 4;
+    this.roundRect(btnX, btnY, btnW, btnH, cornerRadius);
+    this.ctx.stroke();
+
+    // Draw text with shadow
+    this.ctx.fillStyle = "rgba(0,0,0,0.3)";
+    this.ctx.font = "bold 40px Arial";
     this.ctx.textAlign = "center";
-    this.ctx.fillText("▶ START GAME", this.canvas.width / 2, btnY + 45);
+    this.ctx.fillText("▶ START GAME", this.canvas.width / 2, btnY + 58);
+
+    this.ctx.fillStyle = "#fff";
+    this.ctx.font = "bold 40px Arial";
+    this.ctx.fillText("▶ START GAME", this.canvas.width / 2, btnY + 55);
 
     this.ctx.fillStyle = "#cccccc";
     this.ctx.font = "16px Arial";
-    this.ctx.fillText("(Or press SPACE • Music plays automatically)", this.canvas.width / 2, this.canvas.height / 2 + 190);
+    this.ctx.fillText("(Or press SPACE • Music plays automatically)", this.canvas.width / 2, this.canvas.height / 2 + 210);
+  }
+
+  private roundRect(x: number, y: number, w: number, h: number, r: number) {
+    this.ctx.beginPath();
+    this.ctx.moveTo(x + r, y);
+    this.ctx.lineTo(x + w - r, y);
+    this.ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    this.ctx.lineTo(x + w, y + h - r);
+    this.ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    this.ctx.lineTo(x + r, y + h);
+    this.ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    this.ctx.lineTo(x, y + r);
+    this.ctx.quadraticCurveTo(x, y, x + r, y);
+    this.ctx.closePath();
   }
 
   private renderUI() {
