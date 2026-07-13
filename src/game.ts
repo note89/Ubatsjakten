@@ -23,9 +23,6 @@ export class Game {
   private bgImage: HTMLImageElement;
   private heartImages: HTMLImageElement[] = [];
   private startButtonBounds = { x: 0, y: 0, w: 0, h: 0 };
-  private musicVolume = 0.6;
-  private musicButtonBounds = { x: 0, y: 0, w: 0, h: 0 };
-  private volumeSliderBounds = { x: 0, y: 0, w: 0, h: 0 };
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -78,9 +75,6 @@ export class Game {
           this.player.shoot();
         }
       }
-      if (e.key === "m" || e.key === "M") {
-        this.toggleMusic();
-      }
       if (e.key === "z" || e.key === "Z") {
         if (!this.gameOver && this.started) {
           if (this.player.fireIbra()) {
@@ -106,16 +100,6 @@ export class Game {
 
       if (!this.started && this.isPointInButton(x, y, this.startButtonBounds)) {
         this.startGame();
-      }
-
-      if (this.started && this.isPointInButton(x, y, this.musicButtonBounds)) {
-        this.toggleMusic();
-      }
-
-      if (this.started && this.isPointInButton(x, y, this.volumeSliderBounds)) {
-        const sliderX = x - this.volumeSliderBounds.x;
-        const newVolume = Math.max(0, Math.min(1, sliderX / this.volumeSliderBounds.w));
-        this.setMusicVolume(newVolume);
       }
     });
   }
@@ -239,20 +223,6 @@ export class Game {
     this.enemies.push(new Enemy(this.canvas.width, y, 90, 70, speed));
   }
 
-  private toggleMusic() {
-    if (this.musicPlaying) {
-      this.audio.stopBackgroundMusic();
-      this.musicPlaying = false;
-    } else {
-      this.audio.playBackgroundMusic();
-      this.musicPlaying = true;
-    }
-  }
-
-  private setMusicVolume(volume: number) {
-    this.musicVolume = volume;
-    this.audio.setVolume(volume);
-  }
 
   private render() {
     // Background
@@ -397,49 +367,6 @@ export class Game {
       this.ctx.textAlign = "center";
       this.ctx.fillText("ZLATAN READY (Z)", this.canvas.width / 2, 50);
     }
-
-    // Music controls
-    this.renderMusicControls();
-  }
-
-  private renderMusicControls() {
-    const btnX = this.canvas.width - 140;
-    const btnY = 10;
-    const btnW = 130;
-    const btnH = 30;
-    const sliderY = btnY + 35;
-    const sliderW = 130;
-    const sliderH = 8;
-
-    this.musicButtonBounds = { x: btnX, y: btnY, w: btnW, h: btnH };
-    this.volumeSliderBounds = { x: btnX, y: sliderY, w: sliderW, h: sliderH };
-
-    // Music button
-    this.ctx.fillStyle = this.musicPlaying ? "#00dd00" : "#dd0000";
-    this.ctx.fillRect(btnX, btnY, btnW, btnH);
-    this.ctx.fillStyle = "#000";
-    this.ctx.font = "bold 14px Arial";
-    this.ctx.textAlign = "center";
-    this.ctx.fillText(this.musicPlaying ? "♪ PLAYING" : "♪ STOPPED", btnX + btnW / 2, btnY + 22);
-
-    // Volume slider background
-    this.ctx.fillStyle = "#333";
-    this.ctx.fillRect(btnX, sliderY, sliderW, sliderH);
-
-    // Volume slider progress
-    this.ctx.fillStyle = "#00dd00";
-    this.ctx.fillRect(btnX, sliderY, sliderW * this.musicVolume, sliderH);
-
-    // Volume slider border
-    this.ctx.strokeStyle = "#fff";
-    this.ctx.lineWidth = 2;
-    this.ctx.strokeRect(btnX, sliderY, sliderW, sliderH);
-
-    // Volume text
-    this.ctx.fillStyle = "#fff";
-    this.ctx.font = "12px Arial";
-    this.ctx.textAlign = "left";
-    this.ctx.fillText(`VOL: ${Math.round(this.musicVolume * 100)}%`, btnX, sliderY - 5);
   }
 
   private renderGameOver() {
