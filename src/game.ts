@@ -102,7 +102,14 @@ export class Game {
   private startGame() {
     this.started = true;
     this.audio.playGameStart();
-    setTimeout(() => this.audio.playBackgroundMusic(), 500);
+    // Resume audio context and start background music on first user interaction
+    if (this.audio['audioContext'].state === 'suspended') {
+      this.audio['audioContext'].resume().then(() => {
+        setTimeout(() => this.audio.playBackgroundMusic(), 200);
+      });
+    } else {
+      setTimeout(() => this.audio.playBackgroundMusic(), 500);
+    }
   }
 
   private update() {
