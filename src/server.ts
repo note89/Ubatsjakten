@@ -39,7 +39,7 @@ const server = serve({
         }
       }
 
-      if (pathname.startsWith("/assets/")) {
+      if (pathname.startsWith("/assets/") || pathname === "/favicon.ico") {
         const filePath = path.join(import.meta.dir, "..", "public", pathname);
         if (existsSync(filePath)) {
           return new Response(readFileSync(filePath), {
