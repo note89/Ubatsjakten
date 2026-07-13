@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "dev": "bun run src/server.ts",
-    "build": "bun build ./src/index.ts --outdir ./dist --target browser"
+    "build": "bun build ./src/index.ts --outdir ./dist --target browser --minify",
+    "deploy": "bun run build && rsync -avz --delete dist/ public/ index.html root@167.71.36.98:/opt/ubatsjakten/ && ssh root@167.71.36.98 'systemctl restart ubatsjakten'"
   },
   "keywords": ["game", "sweden", "typescript"],
   "author": "Nils Eriksson",

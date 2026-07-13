@@ -14,6 +14,7 @@ export class Game {
   private gameOver = false;
   private paused = false;
   private started = false;
+  private musicPlaying = false;
   private spawnTimer = 0;
   private spawnInterval = 180;
   private spawnMultiplier = 0.95;
@@ -21,6 +22,7 @@ export class Game {
   private audio: AudioManager;
   private bgImage: HTMLImageElement;
   private heartImages: HTMLImageElement[] = [];
+  private startButtonBounds = { x: 0, y: 0, w: 0, h: 0 };
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -73,6 +75,9 @@ export class Game {
           this.player.shoot();
         }
       }
+      if (e.key === "m" || e.key === "M") {
+        this.toggleMusic();
+      }
       if (e.key === "z" || e.key === "Z") {
         if (!this.gameOver && this.started) {
           if (this.player.fireIbra()) {
@@ -90,6 +95,20 @@ export class Game {
         this.player.stopMoveDown();
       }
     });
+
+    this.canvas.addEventListener("click", (e) => {
+      const rect = this.canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      if (!this.started && this.isPointInButton(x, y, this.startButtonBounds)) {
+        this.startGame();
+      }
+    });
+  }
+
+  private isPointInButton(x: number, y: number, button: { x: number; y: number; w: number; h: number }): boolean {
+    return x >= button.x && x <= button.x + button.w && y >= button.y && y <= button.y + button.h;
   }
 
   private setupResize() {
@@ -102,6 +121,7 @@ export class Game {
   private startGame() {
     this.started = true;
     this.audio.playGameStart();
+    this.musicPlaying = true;
     // Resume audio context and start background music on first user interaction
     if (this.audio['audioContext'].state === 'suspended') {
       this.audio['audioContext'].resume().then(() => {
@@ -212,6 +232,16 @@ export class Game {
     this.enemies.push(new Enemy(this.canvas.width, y, 90, 70, speed));
   }
 
+  private toggleMusic() {
+    if (this.musicPlaying) {
+      this.audio.stopBackgroundMusic();
+      this.musicPlaying = false;
+    } else {
+      this.audio.playBackgroundMusic();
+      this.musicPlaying = true;
+    }
+  }
+
   private render() {
     // Background
     if (this.bgImage.complete) {
@@ -256,7 +286,24 @@ export class Game {
     this.ctx.fillText("UBÅTSJAKTEN", this.canvas.width / 2, this.canvas.height / 2 - 100);
     this.ctx.font = "24px Arial";
     this.ctx.fillText("↑/↓ Move | SPACE Shoot | Z Zlatan", this.canvas.width / 2, this.canvas.height / 2 + 50);
-    this.ctx.fillText("Press SPACE to start", this.canvas.width / 2, this.canvas.height / 2 + 100);
+
+    const btnX = this.canvas.width / 2 - 200;
+    const btnY = this.canvas.height / 2 + 100;
+    const btnW = 400;
+    const btnH = 60;
+
+    this.startButtonBounds = { x: btnX, y: btnY, w: btnW, h: btnH };
+
+    this.ctx.fillStyle = "#ffff00";
+    this.ctx.fillRect(btnX, btnY, btnW, btnH);
+    this.ctx.fillStyle = "#000";
+    this.ctx.font = "bold 32px Arial";
+    this.ctx.textAlign = "center";
+    this.ctx.fillText("▶ START GAME", this.canvas.width / 2, btnY + 45);
+
+    this.ctx.fillStyle = "#cccccc";
+    this.ctx.font = "16px Arial";
+    this.ctx.fillText("(Or press SPACE • Music plays automatically)", this.canvas.width / 2, this.canvas.height / 2 + 190);
   }
 
   private renderUI() {
