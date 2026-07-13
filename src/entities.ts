@@ -64,11 +64,13 @@ export class Player {
   }
 
   fireIbra() {
-    if (this.ibraReady()) {
+    if (this.shootCount >= 20) {
       this.shootCount = 0;
       const ibra = new Bullet(this.x + this.width, this.y + this.height / 2, 200, 150, true);
       this.pendingBullets.push(ibra);
+      return true;
     }
+    return false;
   }
 
   ibraReady(): boolean {

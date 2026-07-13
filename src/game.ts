@@ -113,11 +113,11 @@ export class Game {
     bullets.forEach((b) => this.bullets.push(b));
     this.player.clearBullets();
 
-    // Spawn enemies
+    // Spawn enemies (cap minimum spawn interval at 60 frames)
     this.spawnTimer++;
     if (this.spawnTimer > this.spawnInterval) {
       this.spawnEnemy();
-      this.spawnInterval *= this.spawnMultiplier;
+      this.spawnInterval = Math.max(60, this.spawnInterval * this.spawnMultiplier);
       this.spawnTimer = 0;
     }
 

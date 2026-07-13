@@ -76,15 +76,24 @@ export class AudioManager {
   playBackgroundMusic() {
     if (this.bgmSource) return;
     const buffer = this.sounds.get("DuringGame");
-    if (!buffer) return;
+    if (!buffer) {
+      console.warn("DuringGame buffer not loaded yet");
+      return;
+    }
 
     try {
+      // Resume audio context if suspended
+      if (this.audioContext.state === "suspended") {
+        this.audioContext.resume().catch(err => console.warn("Failed to resume audio context:", err));
+      }
+
       const source = this.audioContext.createBufferSource();
       source.buffer = buffer;
       source.loop = true;
       source.connect(this.bgmGain);
       source.start(0);
       this.bgmSource = source as unknown as AudioBufferAudioNode;
+      console.log("Background music started");
     } catch (err) {
       console.warn("Error playing background music:", err);
     }
