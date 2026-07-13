@@ -9,13 +9,18 @@ export class Game {
   private player: Player;
   private enemies: Enemy[] = [];
   private bullets: Bullet[] = [];
-  private score = 100000;
+  private lives = 3;
+  private submarinesKilled = 0;
   private gameOver = false;
   private paused = false;
+  private started = false;
   private spawnTimer = 0;
-  private spawnInterval = 120;
-  private spawnMultiplier = 0.98;
+  private spawnInterval = 180;
+  private spawnMultiplier = 0.95;
+  private voiceTimer = 0;
   private audio: AudioManager;
+  private bgImage: HTMLImageElement;
+  private heartImages: HTMLImageElement[] = [];
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -24,15 +29,27 @@ export class Game {
     this.canvas.height = window.innerHeight;
 
     this.player = new Player(
-      this.canvas.width / 2,
+      100,
       this.canvas.height / 2,
-      30,
-      40
+      60,
+      50
     );
     this.audio = new AudioManager();
+    this.bgImage = new Image();
+    this.bgImage.src = "/assets/sprites/background.png";
 
+    this.loadHeartImages();
     this.setupInputs();
     this.setupResize();
+  }
+
+  private loadHeartImages() {
+    const sources = ["treFull.png", "trenoll.png", "treett.png"];
+    this.heartImages = sources.map((src) => {
+      const img = new Image();
+      img.src = `/assets/sprites/${src}`;
+      return img;
+    });
   }
 
   private setupInputs() {
@@ -48,14 +65,17 @@ export class Game {
       }
       if (e.key === " ") {
         e.preventDefault();
-        if (!this.gameOver) {
-          const bullet = this.player.shoot();
-          if (bullet) {
-            this.bullets.push(bullet);
-            this.audio.playShoot();
-          }
-        } else {
+        if (!this.started) {
+          this.startGame();
+        } else if (this.gameOver) {
           this.resetGame();
+        } else {
+          this.player.shoot();
+        }
+      }
+      if (e.key === "z" || e.key === "Z") {
+        if (!this.gameOver && this.started) {
+          this.player.fireIbra();
         }
       }
     });
@@ -77,11 +97,23 @@ export class Game {
     });
   }
 
+  private startGame() {
+    this.started = true;
+    this.audio.playGameStart();
+    setTimeout(() => this.audio.playBackgroundMusic(), 500);
+  }
+
   private update() {
-    if (this.gameOver || this.paused) return;
+    if (!this.started || this.gameOver || this.paused) return;
 
     this.player.update(this.canvas.height);
 
+    // Handle player shooting
+    const bullets = this.player.getBullets();
+    bullets.forEach((b) => this.bullets.push(b));
+    this.player.clearBullets();
+
+    // Spawn enemies
     this.spawnTimer++;
     if (this.spawnTimer > this.spawnInterval) {
       this.spawnEnemy();
@@ -89,83 +121,95 @@ export class Game {
       this.spawnTimer = 0;
     }
 
-    this.enemies.forEach((enemy, idx) => {
+    // Update enemies
+    this.enemies = this.enemies.filter((enemy) => {
       enemy.update();
-      if (enemy.x < -50) {
-        this.enemies.splice(idx, 1);
-      }
+      return enemy.x > -100;
     });
 
-    this.bullets.forEach((bullet, idx) => {
+    // Update bullets
+    this.bullets = this.bullets.filter((bullet) => {
       bullet.update();
-      if (bullet.x > this.canvas.width + 50) {
-        this.bullets.splice(idx, 1);
-      }
+      return bullet.x < this.canvas.width + 100;
     });
+
+    // Random King voice
+    this.voiceTimer++;
+    if (this.voiceTimer > 600) {
+      if (Math.random() < 0.01) {
+        this.audio.playKingComment();
+        this.voiceTimer = 0;
+      }
+    }
 
     this.checkCollisions();
 
-    if (!this.player.alive) {
+    if (this.lives <= 0) {
       this.gameOver = true;
-      this.audio.playPutinWins();
+      this.audio.playGameOver();
     }
   }
 
   private checkCollisions() {
+    const bulletsToRemove: number[] = [];
+    const enemiesToRemove: number[] = [];
+
     this.bullets.forEach((bullet, bIdx) => {
       this.enemies.forEach((enemy, eIdx) => {
         if (bullet.collidesWith(enemy)) {
-          this.bullets.splice(bIdx, 1);
-          this.enemies.splice(eIdx, 1);
-          this.score--;
+          if (!bulletsToRemove.includes(bIdx)) bulletsToRemove.push(bIdx);
+          if (!enemiesToRemove.includes(eIdx)) enemiesToRemove.push(eIdx);
+          this.submarinesKilled++;
           this.audio.playHit();
-          if (Math.random() < 0.1) {
-            this.audio.playKingComment();
-          }
         }
       });
     });
 
-    this.enemies.forEach((enemy, eIdx) => {
+    // Remove in reverse order to maintain indices
+    bulletsToRemove.sort((a, b) => b - a).forEach((idx) => this.bullets.splice(idx, 1));
+    enemiesToRemove.sort((a, b) => b - a).forEach((idx) => this.enemies.splice(idx, 1));
+
+    // Player collision
+    this.enemies = this.enemies.filter((enemy, eIdx) => {
       if (enemy.collidesWith(this.player)) {
-        this.enemies.splice(eIdx, 1);
-        this.player.alive = false;
+        this.lives--;
         this.audio.playLoseLife();
+        return false;
       }
+      return true;
     });
   }
 
   private spawnEnemy() {
-    const y = Math.random() * (this.canvas.height - 60) + 30;
-    const speed = -2 - Math.random() * 1.5;
-    this.enemies.push(new Enemy(this.canvas.width, y, 40, 30, speed));
+    const y = Math.random() * (this.canvas.height - 80) + 40;
+    const speedVariation = Math.random() * 3.7 - 1.3;
+    const speed = -2 - speedVariation;
+    this.enemies.push(new Enemy(this.canvas.width, y, 60, 45, speed));
   }
 
   private render() {
-    this.ctx.fillStyle = "#1a1a2e";
-    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    // Background
+    if (this.bgImage.complete) {
+      this.ctx.drawImage(this.bgImage, 0, 0, this.canvas.width, this.canvas.height);
+    } else {
+      this.ctx.fillStyle = "#1a1a2e";
+      this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    }
 
+    if (!this.started) {
+      this.renderMenu();
+      return;
+    }
+
+    // Game entities
     this.player.render(this.ctx);
-
-    this.enemies.forEach((enemy) => {
-      enemy.render(this.ctx);
-    });
-
-    this.bullets.forEach((bullet) => {
-      bullet.render(this.ctx);
-    });
+    this.enemies.forEach((e) => e.render(this.ctx));
+    this.bullets.forEach((b) => b.render(this.ctx));
 
     this.renderUI();
-  }
-
-  private renderUI() {
-    this.ctx.fillStyle = "#fff";
-    this.ctx.font = "30px Arial";
-    this.ctx.textAlign = "center";
-    this.ctx.fillText(`Ubåtar kvar: ${this.score}`, this.canvas.width / 2, 50);
 
     if (this.paused) {
-      this.ctx.fillStyle = "rgba(0,0,0,0.7)";
+      this.ctx.fillStyle = "rgba(0,0,0,0.6)";
       this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
       this.ctx.fillStyle = "#fff";
       this.ctx.font = "48px Arial";
@@ -174,35 +218,73 @@ export class Game {
     }
 
     if (this.gameOver) {
-      const putinImg = new Image();
-      putinImg.src = "/assets/sprites/putinwins.png";
-      if (putinImg.complete || putinImg.naturalWidth > 0) {
-        this.ctx.drawImage(
-          putinImg,
-          this.canvas.width / 2 - 150,
-          this.canvas.height / 2 - 150,
-          300,
-          300
-        );
-      } else {
-        this.ctx.fillStyle = "rgba(0,0,0,0.8)";
-        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-        this.ctx.fillStyle = "#ff0000";
-        this.ctx.font = "48px Arial";
-        this.ctx.textAlign = "center";
-        this.ctx.fillText("PUTIN WINS", this.canvas.width / 2, this.canvas.height / 2);
-      }
-      this.ctx.fillStyle = "#fff";
-      this.ctx.font = "24px Arial";
-      this.ctx.textAlign = "center";
-      this.ctx.fillText("Press SPACE to restart", this.canvas.width / 2, this.canvas.height - 50);
+      this.renderGameOver();
     }
   }
 
-  public start() {
-    this.audio.playGameStart();
-    setTimeout(() => this.audio.playBackgroundMusic(), 1000);
+  private renderMenu() {
+    this.ctx.fillStyle = "rgba(0,0,0,0.7)";
+    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    this.ctx.fillStyle = "#fff";
+    this.ctx.font = "bold 60px Arial";
+    this.ctx.textAlign = "center";
+    this.ctx.fillText("UBÅTSJAKTEN", this.canvas.width / 2, this.canvas.height / 2 - 100);
+    this.ctx.font = "24px Arial";
+    this.ctx.fillText("↑/↓ Move | SPACE Shoot | Z Zlatan", this.canvas.width / 2, this.canvas.height / 2 + 50);
+    this.ctx.fillText("Press SPACE to start", this.canvas.width / 2, this.canvas.height / 2 + 100);
+  }
 
+  private renderUI() {
+    // Score
+    this.ctx.fillStyle = "#fff";
+    this.ctx.font = "24px Arial";
+    this.ctx.textAlign = "left";
+    this.ctx.fillText(`Ubåtar kvar: ${this.submarinesKilled}`, 20, 40);
+
+    // Lives (hearts)
+    for (let i = 0; i < 3; i++) {
+      const img = this.heartImages[Math.max(0, 2 - this.lives)] || this.heartImages[2];
+      if (img.complete) {
+        this.ctx.drawImage(img, this.canvas.width - 150 + i * 50, 20, 40, 40);
+      }
+    }
+
+    // Ibra indicator
+    if (this.player.ibraReady()) {
+      this.ctx.fillStyle = "#ffff00";
+      this.ctx.font = "bold 20px Arial";
+      this.ctx.textAlign = "center";
+      this.ctx.fillText("ZLATAN READY (Z)", this.canvas.width / 2, 50);
+    }
+  }
+
+  private renderGameOver() {
+    const putinImg = new Image();
+    putinImg.src = "/assets/sprites/putinwins.png";
+    this.ctx.fillStyle = "rgba(0,0,0,0.5)";
+    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    if (putinImg.complete) {
+      this.ctx.drawImage(
+        putinImg,
+        this.canvas.width / 2 - 150,
+        this.canvas.height / 2 - 150,
+        300,
+        300
+      );
+    } else {
+      this.ctx.fillStyle = "#ff0000";
+      this.ctx.font = "48px Arial";
+      this.ctx.textAlign = "center";
+      this.ctx.fillText("PUTIN WINS", this.canvas.width / 2, this.canvas.height / 2);
+    }
+    this.ctx.fillStyle = "#fff";
+    this.ctx.font = "24px Arial";
+    this.ctx.textAlign = "center";
+    this.ctx.fillText(`Ubåtar förstörda: ${this.submarinesKilled}`, this.canvas.width / 2, this.canvas.height - 100);
+    this.ctx.fillText("Press SPACE to restart", this.canvas.width / 2, this.canvas.height - 50);
+  }
+
+  public start() {
     const gameLoop = () => {
       this.update();
       this.render();
@@ -211,24 +293,19 @@ export class Game {
     gameLoop();
   }
 
-  public getBullets(): Bullet[] {
-    return this.bullets;
-  }
-
-  public addBullet(bullet: Bullet) {
-    this.bullets.push(bullet);
-  }
-
-  public resetGame() {
+  private resetGame() {
     this.gameOver = false;
     this.paused = false;
-    this.score = 100000;
-    this.spawnInterval = 120;
+    this.started = true;
+    this.lives = 3;
+    this.submarinesKilled = 0;
+    this.spawnInterval = 180;
     this.spawnTimer = 0;
     this.enemies = [];
     this.bullets = [];
-    this.player.alive = true;
-    this.player.x = this.canvas.width / 2;
+    this.player.x = 100;
     this.player.y = this.canvas.height / 2;
+    this.player.reset();
+    this.audio.playBackgroundMusic();
   }
 }
