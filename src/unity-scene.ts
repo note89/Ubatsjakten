@@ -22,6 +22,8 @@ export interface ScreenRect {
 // TimeManager.asset
 export const FIXED_DELTA_TIME = 0.02;
 export const MAXIMUM_DELTA_TIME = 1 / 3;
+/** Time.timeScale when the player starts; the value is engine-global and survives Application.LoadLevel. */
+export const INITIAL_TIME_SCALE = 1;
 
 // PlayerSettings.asset: default standalone window, not resizable
 export const SCREEN_WIDTH = 1280;
@@ -178,6 +180,8 @@ export const POSITION_ITERATIONS = 3;
 export const DEFAULT_FRICTION = 0.4;
 export const DEFAULT_RESTITUTION = 0;
 export const MAX_ROTATION_SPEED_DEGREES_PER_SECOND = 360;
+/** Box2D's linear slop; Unity 4.5 exposes it as "Min Penetration For Penalty". */
+export const MIN_PENETRATION_FOR_PENALTY = 0.01;
 
 // OnGUI (masterScript.js)
 export const SUBS_LEFT_LABEL_FONT_PX = 30;

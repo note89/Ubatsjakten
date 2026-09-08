@@ -63,12 +63,13 @@ export class AudioClipLibrary {
 export type Looping = "loop" | "once";
 
 /**
- * One Unity AudioSource: a fixed volume, one clip playing at a time (Play interrupts),
- * plus fire-and-forget one-shots mixed at the same volume.
+ * One Unity AudioSource: a fixed volume, one clip playing at a time (Play interrupts the clip only),
+ * plus fire-and-forget one-shots mixed at the same volume until the source is stopped or destroyed.
  */
 export class AudioSourceChannel {
   private readonly gain: GainNode;
   private current: AudioBufferSourceNode | null = null;
+  private readonly oneShots = new Set<AudioBufferSourceNode>();
 
   constructor(
     private readonly context: AudioContext,
@@ -96,10 +97,23 @@ export class AudioSourceChannel {
     const source = this.context.createBufferSource();
     source.buffer = clip;
     source.connect(this.gain);
+    source.onended = () => {
+      this.oneShots.delete(source);
+    };
     source.start();
+    this.oneShots.add(source);
   }
 
+  /** AudioSource.Stop, or the source being destroyed: silences the clip and every one-shot. */
   stop(): void {
+    this.interruptClip();
+    for (const source of this.oneShots) {
+      source.stop();
+    }
+    this.oneShots.clear();
+  }
+
+  private interruptClip(): void {
     if (this.current === null) {
       return;
     }
@@ -108,7 +122,7 @@ export class AudioSourceChannel {
   }
 
   private startAt(clip: AudioBuffer, when: number): void {
-    this.stop();
+    this.interruptClip();
     const source = this.context.createBufferSource();
     source.buffer = clip;
     source.loop = this.looping === "loop";

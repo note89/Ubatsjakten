@@ -6,6 +6,7 @@ import {
   FIXED_DELTA_TIME,
   GRAVITY,
   MAX_ROTATION_SPEED_DEGREES_PER_SECOND,
+  MIN_PENETRATION_FOR_PENALTY,
   POSITION_ITERATIONS,
   VELOCITY_ITERATIONS,
   type Size2D,
@@ -95,6 +96,7 @@ export class PhysicsWorld {
 
   constructor() {
     Settings.maxRotation = degreesToRadians(MAX_ROTATION_SPEED_DEGREES_PER_SECOND) * FIXED_DELTA_TIME;
+    Settings.linearSlop = MIN_PENETRATION_FOR_PENALTY;
     this.world = new World({ gravity: new Vec2(GRAVITY.x, GRAVITY.y) });
     this.world.on("begin-contact", (contact) => this.onBeginContact(contact));
     this.world.on("end-contact", (contact) => this.onEndContact(contact));

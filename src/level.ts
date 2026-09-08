@@ -1,6 +1,6 @@
 import { AudioClipLibrary, AudioSourceChannel } from "./audio";
+import type { UnityClock } from "./clock";
 import {
-  DESTROY_AT_END_OF_FRAME,
   King,
   SpriteObject,
   StaticCollider,
@@ -22,7 +22,6 @@ import {
   BORDER_COLLIDER,
   BORDER_POSITION,
   CROWN_SPRITES,
-  FIXED_DELTA_TIME,
   GAME_MASTER_POSITION,
   GAME_START_SOUND_VOLUME,
   INITIAL_SPAWN_INTERVAL_SECONDS,
@@ -70,13 +69,16 @@ function insideRect(point: Vec2Like, rect: typeof RESTART_BUTTON_RECT): boolean 
   return point.x >= rect.x && point.x <= rect.x + rect.width && point.y >= rect.y && point.y <= rect.y + rect.height;
 }
 
+/** Time.timeScale as masterScript.Update writes it from the pause flag. */
+function timeScaleFor(pause: PauseState): number {
+  return pause === "paused" ? 0 : 1;
+}
+
 /**
  * One load of the "main" scene: the GameMaster script plus Unity's frame loop
- * (FixedUpdate + physics at 50 Hz in scaled time, Update every rendered frame, Destroy at end of frame).
+ * (FixedUpdate + physics at 50 Hz in scaled time, Update every rendered frame, delayed calls after each).
  */
 export class Level implements SceneContext, SubCounter, ImplodeSound, LevelView {
-  time = 0;
-  private fixedTime = 0;
   private pause: PauseState = "running";
   menu: MenuVisibility = "hidden";
   subsLeft = INITIAL_SUBS_LEFT;
@@ -92,6 +94,7 @@ export class Level implements SceneContext, SubCounter, ImplodeSound, LevelView 
 
   constructor(
     private readonly input: KeyboardInput,
+    private readonly clock: UnityClock,
     audioContext: AudioContext,
     private readonly clips: AudioClipLibrary,
   ) {
@@ -124,29 +127,22 @@ export class Level implements SceneContext, SubCounter, ImplodeSound, LevelView 
     this.startSoundChannel.play(clips.clip("SpeletStartar"));
     this.musicChannel.playDelayed(clips.clip("DuringGame"), MUSIC_START_DELAY_SECONDS);
 
-    this.nextSpawnTime = this.time + this.spawnInterval;
-  }
-
-  /** Time.timeScale as masterScript.Update sets it from the pause flag. */
-  timeScale(): number {
-    return this.pause === "paused" ? 0 : 1;
+    this.nextSpawnTime = this.clock.time + this.spawnInterval;
   }
 
   frame(unscaledDeltaTime: number): void {
-    this.time += unscaledDeltaTime * this.timeScale();
-    this.runPendingStarts();
-    while (this.fixedTime + FIXED_DELTA_TIME <= this.time) {
-      this.fixedTime += FIXED_DELTA_TIME;
+    this.clock.advanceFrame(unscaledDeltaTime);
+    this.clock.runFixedSteps(() => {
       this.fixedUpdate();
       this.king?.syncBodyFromTransform();
       this.physics.step();
       for (const gameObject of this.objects) {
         gameObject.afterPhysicsStep();
       }
-    }
-    this.runPendingStarts();
+      this.runDelayedCalls();
+    });
     this.update();
-    this.flushDestroyed();
+    this.runDelayedCalls();
   }
 
   clickAt(point: Vec2Like): ClickOutcome {
@@ -181,11 +177,11 @@ export class Level implements SceneContext, SubCounter, ImplodeSound, LevelView 
   }
 
   destroy(gameObject: GameObject): void {
-    this.scheduleDestroy(gameObject, DESTROY_AT_END_OF_FRAME);
+    gameObject.scheduleDestroy(this.clock.time);
   }
 
   destroyAfter(gameObject: GameObject, delaySeconds: number): void {
-    this.scheduleDestroy(gameObject, this.time + delaySeconds);
+    gameObject.scheduleDestroy(this.clock.time + delaySeconds);
   }
 
   decreaseSubs(): void {
@@ -200,25 +196,35 @@ export class Level implements SceneContext, SubCounter, ImplodeSound, LevelView 
     this.objects.push(gameObject);
   }
 
-  private scheduleDestroy(gameObject: GameObject, destroyAt: number): void {
-    const current = gameObject.lifecycle;
-    const earliest = current.type === "doomed" ? Math.min(current.destroyAt, destroyAt) : destroyAt;
-    gameObject.lifecycle = { type: "doomed", destroyAt: earliest };
-  }
-
-  private runPendingStarts(): void {
+  /**
+   * Unity's delayed-call slot (ScriptRunDelayedFixedFrameRate after physics, ScriptRunDelayedDynamicFrameRate
+   * after Update): pending Start calls first, then every Destroy whose deadline Time.time has reached.
+   */
+  private runDelayedCalls(): void {
     const starting = this.pendingStart;
     this.pendingStart = [];
     for (const gameObject of starting) {
       gameObject.start();
     }
+    const survivors: GameObject[] = [];
+    for (const gameObject of this.objects) {
+      if (gameObject.isDestroyDue(this.clock.time)) {
+        gameObject.onDestroyed();
+        if (gameObject === this.king) {
+          this.king = null;
+        }
+      } else {
+        survivors.push(gameObject);
+      }
+    }
+    this.objects = survivors;
   }
 
   private fixedUpdate(): void {
-    if (this.fixedTime > this.nextSpawnTime) {
+    if (this.clock.time > this.nextSpawnTime) {
       this.spawnRussianSub();
       this.spawnInterval *= SPAWN_INTERVAL_MULTIPLIER;
-      this.nextSpawnTime = this.fixedTime + this.spawnInterval;
+      this.nextSpawnTime = this.clock.time + this.spawnInterval;
     }
     for (const gameObject of this.objects) {
       gameObject.fixedUpdate();
@@ -236,6 +242,7 @@ export class Level implements SceneContext, SubCounter, ImplodeSound, LevelView 
       this.pause = togglePause(this.pause);
       this.menu = toggleMenu(this.menu);
     }
+    this.clock.setTimeScale(timeScaleFor(this.pause));
   }
 
   private spawnRussianSub(): void {
@@ -258,20 +265,5 @@ export class Level implements SceneContext, SubCounter, ImplodeSound, LevelView 
     );
     this.pause = togglePause(this.pause);
     this.menu = "shown";
-  }
-
-  private flushDestroyed(): void {
-    const survivors: GameObject[] = [];
-    for (const gameObject of this.objects) {
-      if (gameObject.lifecycle.type === "doomed" && gameObject.lifecycle.destroyAt <= this.time) {
-        gameObject.onDestroyed();
-        if (gameObject === this.king) {
-          this.king = null;
-        }
-      } else {
-        survivors.push(gameObject);
-      }
-    }
-    this.objects = survivors;
   }
 }

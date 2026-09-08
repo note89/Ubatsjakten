@@ -1,5 +1,6 @@
 import { SpriteLibrary } from "./assets";
 import { AudioClipLibrary } from "./audio";
+import { UnityClock } from "./clock";
 import { KeyboardInput } from "./input";
 import { Level } from "./level";
 import { CanvasRenderer, START_BUTTON_RECT } from "./render";
@@ -25,6 +26,7 @@ export class Game {
   private phase: Phase = { type: "loading" };
   private readonly renderer: CanvasRenderer;
   private readonly input = new KeyboardInput(window);
+  private readonly clock = new UnityClock();
   private readonly audioContext = new AudioContext();
   private lastFrameTimestamp: number | null = null;
 
@@ -95,9 +97,9 @@ export class Game {
     }
   }
 
-  /** Application.LoadLevel("main"): a fresh scene, fresh scripts, fresh audio. */
+  /** Application.LoadLevel("main"): a fresh scene, fresh scripts, fresh audio; the engine clock carries on. */
   private loadLevel(assets: LoadedAssets): void {
     void this.audioContext.resume();
-    this.phase = { type: "playing", assets, level: new Level(this.input, this.audioContext, assets.clips) };
+    this.phase = { type: "playing", assets, level: new Level(this.input, this.clock, this.audioContext, assets.clips) };
   }
 }

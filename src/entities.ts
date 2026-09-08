@@ -55,21 +55,21 @@ export interface SpriteView {
 
 export type ActiveState = "active" | "inactive";
 
-/** Unity's Destroy(obj) with no delay: gone at the end of the current frame, whatever the clock says. */
-export const DESTROY_AT_END_OF_FRAME = Number.NEGATIVE_INFINITY;
+/**
+ * Unity Destroy(obj, t): the object dies at the first delayed-call slot (after a physics step or after
+ * Update) once Time.time has reached destroyAt; plain Destroy(obj) is the same call with t = 0.
+ */
+type Lifecycle = { readonly type: "alive" } | { readonly type: "doomed"; readonly destroyAt: number };
 
-export type Lifecycle = { readonly type: "alive" } | { readonly type: "doomed"; readonly destroyAt: number };
-
-/** What scripts can ask of the scene they live in (Instantiate / Destroy / Time.time). */
+/** What scripts can ask of the scene they live in (Instantiate / Destroy). */
 export interface SceneContext {
-  readonly time: number;
   instantiate(gameObject: GameObject): void;
   destroy(gameObject: GameObject): void;
   destroyAfter(gameObject: GameObject, delaySeconds: number): void;
 }
 
 export abstract class GameObject {
-  lifecycle: Lifecycle = { type: "alive" };
+  private lifecycle: Lifecycle = { type: "alive" };
   activeState: ActiveState = "active";
 
   constructor(
@@ -77,7 +77,17 @@ export abstract class GameObject {
     readonly sprite: SpriteView | null,
   ) {}
 
-  /** Unity Start: runs once, before the object's first Update, never in the phase that created it. */
+  /** Several Destroy calls on one object: the earliest deadline wins. */
+  scheduleDestroy(destroyAt: number): void {
+    const earliest = this.lifecycle.type === "doomed" ? Math.min(this.lifecycle.destroyAt, destroyAt) : destroyAt;
+    this.lifecycle = { type: "doomed", destroyAt: earliest };
+  }
+
+  isDestroyDue(time: number): boolean {
+    return this.lifecycle.type === "doomed" && this.lifecycle.destroyAt <= time;
+  }
+
+  /** Unity Start: runs once, in the delayed-call slot right after the phase that instantiated the object. */
   start(): void {}
   update(): void {}
   fixedUpdate(): void {}
@@ -150,6 +160,9 @@ export interface ImplodeSound {
 
 const LOSE_LIFE_CLIPS: readonly ClipName[] = ["LoseLife1", "LoseLife2"];
 
+/** deActivate.js hides child number `hits`; once every child is hidden, GetChild throws and unwinds the caller too. */
+export type DeactivateOutcome = "crown-hidden" | "threw-child-out-of-bounds";
+
 /** Trekronor: the crown sprites in the corner, one hidden per hit; the third hit kills the king (deActivate.js). */
 export class Trekronor extends GameObject {
   private hits = 0;
@@ -166,17 +179,17 @@ export class Trekronor extends GameObject {
     this.loseLifeChannel = new AudioSourceChannel(audioContext, LOSE_LIFE_VOLUME, "once");
   }
 
-  deActivate(): void {
+  deActivate(): DeactivateOutcome {
     this.loseLifeChannel.play(this.clips.clip(randomElement(LOSE_LIFE_CLIPS)));
     if (this.hits >= this.crowns.length) {
-      // Unity: transform.GetChild(i) throws here, so the rest of the function never runs.
-      return;
+      return "threw-child-out-of-bounds";
     }
     this.crowns[this.hits].activeState = "inactive";
     this.hits += 1;
     if (this.hits === HITS_UNTIL_KING_DIES) {
       this.context.destroy(this.king);
     }
+    return "crown-hidden";
   }
 
   override onDestroyed(): void {
@@ -213,7 +226,10 @@ export class Sub extends PhysicsGameObject {
   override onTriggerEnter2D(other: Collidable): void {
     switch (other.tag) {
       case "kungen":
-        this.trekronor.deActivate();
+        if (this.trekronor.deActivate() === "threw-child-out-of-bounds") {
+          // The exception unwinds dieOnCollision.OnTriggerEnter2D: no decreaseSubs, no Destroy.
+          return;
+        }
         this.master.decreaseSubs();
         this.context.destroy(this);
         break;
