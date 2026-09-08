@@ -53,31 +53,12 @@
       #gameCanvas {
         display: block;
         background: #1a1a2e;
-        cursor: crosshair;
       }
 
-      #info {
-        position: absolute;
-        bottom: 20px;
-        left: 20px;
-        color: #fff;
-        font-size: 14px;
-        background: rgba(0, 0, 0, 0.5);
-        padding: 10px;
-        border-radius: 4px;
-        z-index: 10;
-      }
     </style>
   </head>
   <body>
     <canvas id="gameCanvas"></canvas>
-    <div id="info">
-      <p>↑/↓ Move | SPACE Shoot | ESC Pause</p>
-    </div>
-    <!-- Fallback audio element -->
-    <audio id="bgmAudio" loop style="display:none;">
-      <source src="/assets/sounds/DuringGame.wav" type="audio/wav">
-    </audio>
     <script type="module" src="/dist/index.js"></script>
   </body>
 </html>

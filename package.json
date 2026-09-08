@@ -9,6 +9,14 @@
     "build": "bun build ./src/index.ts --outdir ./dist --target browser --minify",
     "deploy": "bun run build && rsync -avz dist/ root@167.71.36.98:/opt/ubatsjakten/dist/ && rsync -avz public/ root@167.71.36.98:/opt/ubatsjakten/public/ && rsync -avz index.html root@167.71.36.98:/opt/ubatsjakten/ && ssh root@167.71.36.98 'systemctl restart ubatsjakten'"
   },
+  "devDependencies": {
+    "svelte": "^4.2.0"
+  },
+  "dependencies": {
+    "earcut": "^3.2.3",
+    "planck": "^1.5.0",
+    "svelte": "^4.2.0"
+  },
   "keywords": ["game", "sweden", "typescript"],
   "author": "Nils Eriksson",
   "license": "MIT"
